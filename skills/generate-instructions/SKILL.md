@@ -1,7 +1,7 @@
 ---
 name: generate-instructions
-description: "Generate tailored AI agent instruction files via AgentRC's `agentrc instructions` command. Produces AGENTS.md (recommended for multi-agent), .github/copilot-instructions.md (Copilot-only), and optional area-scoped instructions for monorepos. Use after running /assess to close gaps in the AI Tooling pillar."
-argument-hint: "[--output AGENTS.md|.github/copilot-instructions.md] [--strategy flat|nested] [--areas | --area <name>] [--claude-md] [--dry-run]"
+description: "Generate tailored AI agent instruction files via AgentRC's `agentrc instructions` command. Produces .github/copilot-instructions.md (default, recommended for Copilot in VS Code) plus optional per-area `.instructions.md` files with `applyTo` globs for monorepos. Use after running /assess to close gaps in the AI Tooling pillar."
+argument-hint: "[--output .github/copilot-instructions.md|AGENTS.md] [--strategy flat|nested] [--areas | --area <name>] [--apply-to <glob>] [--claude-md] [--dry-run]"
 ---
 
 # /generate-instructions — write AI agent instructions
@@ -14,38 +14,64 @@ VS Code recognises several instruction file types — AgentRC generates the most
 
 | File | Scope | When to use |
 |---|---|---|
-| `AGENTS.md` | Always-on, whole workspace | **Recommended** — works with Copilot, Claude, and other agents |
-| `.github/copilot-instructions.md` | Always-on, whole workspace | Copilot-only repos |
-| `.instructions.md` files | File-pattern or task-based | Targeted rules for specific languages or folders |
+| `.github/copilot-instructions.md` | Always-on, whole workspace | **Default** — VS Code Copilot's native instruction file |
+| `AGENTS.md` | Always-on, whole workspace | Multi-agent repos (Copilot + Claude + others) |
+| `.github/instructions/*.instructions.md` | Scoped by `applyTo` glob | Per-area / per-language rules in monorepos |
+| `CLAUDE.md` | Claude-specific | Add via `--claude-md` (nested only) |
 
 ## Strategies
 
-- **`flat`** *(default)* — single instructions file at the repo root. Simple, easy to review.
-- **`nested`** — hub file at the root plus per-topic detail files in `.agents/`. Better for large or multi-stack repos.
+- **`flat`** *(default)* — single instructions file at the chosen path. Simple, easy to review.
+- **`nested`** — hub file + per-topic detail files in `.agents/`. Better for large or multi-stack repos.
 
-For monorepos, generate **area-scoped** instructions (`--areas`, `--area <name>`, or `--areas-only`). Areas are defined in `agentrc.config.json`.
+For monorepos, generate **area-scoped** instructions with `--areas`, `--area <name>`, or `--areas-only`. Areas are defined in `agentrc.config.json`. Per-area output is written as VS Code `.instructions.md` files with an `applyTo` glob (see below).
+
+## Per-area files with `applyTo`
+
+When the user opts into areas, emit one VS Code-native `.instructions.md` file per area at `.github/instructions/<area>.instructions.md`. Each file MUST start with frontmatter declaring the glob the rules apply to:
+
+```markdown
+---
+applyTo: "apps/frontend/**"
+---
+
+# Frontend area instructions
+
+…AgentRC-generated content for this area…
+```
+
+Workflow:
+
+1. **Read `agentrc.config.json`** to discover declared areas and their `paths` / globs. If `paths` is missing, ask the user for the glob (e.g. `src/api/**`).
+2. **Run `agentrc instructions --areas`** (or `--area <name>`) to produce the per-area body content.
+3. **Wrap each area's content** in `.github/instructions/<area>.instructions.md` with the `applyTo` frontmatter taken from the area's `paths`. If the user passed `--apply-to <glob>` on a single-area call, use that glob verbatim.
+4. **Leave the main file alone** — the root `.github/copilot-instructions.md` stays as the always-on instructions; `.instructions.md` files only kick in for matching paths.
+
+Naming: lowercase, kebab-case area name. Examples: `.github/instructions/frontend.instructions.md`, `.github/instructions/api.instructions.md`, `.github/instructions/infra.instructions.md`.
 
 ## Steps
 
-1. **Pick the target file**. Default to `AGENTS.md`. Ask only if the user hints at a different scope (e.g. "Copilot only" → `.github/copilot-instructions.md`).
+1. **Pick the target file**. **Default to `.github/copilot-instructions.md`.** Switch to `AGENTS.md` only if the user mentions multi-agent / Claude / Cursor support.
 2. **Always ask which strategy to use** — `flat` or `nested` — unless the user already specified one in their message or via `--strategy`. Present the trade-off briefly:
-   - **Flat** *(default)* — one file at the repo root. Simple, easy to review in a single PR. Best for small/medium repos with one stack.
-   - **Nested** — hub file at the root + per-topic detail files in `.agents/`. Optionally also emits `CLAUDE.md` with `--claude-md`. Best for large or multi-stack repos.
+   - **Flat** *(default)* — one file at the chosen path. Simple, easy to review in a single PR. Best for small/medium repos with one stack.
+   - **Nested** — hub file + per-topic detail files in `.agents/`. Optionally also emits `CLAUDE.md` with `--claude-md`. Best for large or multi-stack repos.
    Recommend `nested` proactively when the repo has > 5 top-level directories, multiple stacks, or already uses a monorepo tool (turbo/nx/pnpm workspaces).
-3. **Detect monorepo areas** by reading `agentrc.config.json` (if any). Offer `--areas` if there are areas.
+3. **Detect monorepo areas** by reading `agentrc.config.json`. If areas exist, ask the user whether they want **per-area `.instructions.md` files with `applyTo`** in addition to the root file. Default to "yes" when `agentrc.config.json` declares areas.
 4. **Run dry-run first** so the user can preview:
    ```bash
    npx -y github:microsoft/agentrc instructions --output <file> --strategy <flat|nested> [--areas|--area <name>] [--claude-md] --dry-run
    ```
-5. **Show a short summary** of what would change — files that would be created or overwritten, area count, model used (default `claude-sonnet-4.6`).
+5. **Show a short summary** of what would change — files that would be created or overwritten, area count + their `applyTo` globs, model used (default `claude-sonnet-4.6`).
 6. **On confirmation, run the same command without `--dry-run`** (and optionally `--force` if files already exist).
-7. **Verify** by reading the generated file(s) back and showing the user a 1-paragraph synopsis: stack detected, conventions captured, length.
-8. **Suggest next steps**:
+7. **Post-process areas** — for each area output, write `.github/instructions/<area>.instructions.md` with the correct `applyTo` frontmatter. Create the `.github/instructions/` directory if missing.
+8. **Verify** by reading the generated file(s) back and showing the user a 1-paragraph synopsis: stack detected, conventions captured, length, list of `.instructions.md` files with their globs.
+9. **Suggest next steps**:
    - Re-run the `assess` skill to confirm the AI Tooling pillar score improved.
-   - If the user already has `copilot-instructions.md` and `AGENTS.md`, recommend consolidating to a single source of truth (AgentRC flags this at maturity Level 2+).
+   - If the user already has both `copilot-instructions.md` and `AGENTS.md`, recommend consolidating to a single source of truth (AgentRC flags this at maturity Level 2+).
 
 ## Notes
 
 - AgentRC reads your **actual code** — no templates. Output reflects detected languages, frameworks, and conventions.
 - `--claude-md` (nested strategy only) also emits `CLAUDE.md`.
+- VS Code applies `.instructions.md` files automatically when the active file matches `applyTo`. The root `.github/copilot-instructions.md` always loads.
 - Never run this skill non-interactively in CI; instructions are part of the repo and should land via PR.

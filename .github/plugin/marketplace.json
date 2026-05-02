@@ -2,7 +2,7 @@
   "name": "acreadiness-cockpit-marketplace",
   "metadata": {
     "description": "AI-readiness toolkit for GitHub Copilot — agents and skills powered by Microsoft AgentRC",
-    "version": "0.2.2"
+    "version": "0.3.0"
   },
   "owner": {
     "name": "mvanderbend-msoft"
@@ -12,7 +12,7 @@
       "name": "acreadiness-cockpit",
       "source": ".",
       "description": "Custom agents and skills that drive AgentRC: assess maturity, generate instructions, apply policies, and produce a static HTML readiness dashboard.",
-      "version": "0.2.2",
+      "version": "0.3.0",
       "skills": [
         "./skills/assess",
         "./skills/generate-instructions",

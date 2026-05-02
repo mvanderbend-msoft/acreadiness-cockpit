@@ -17,7 +17,7 @@ A GitHub Copilot **agent plugin** that drives [Microsoft AgentRC](https://github
 | Skill | What it does |
 |---|---|
 | `/assess` | **Measure** — runs the readiness scan and hands off to `@ai-readiness-reporter` to produce the static HTML dashboard. Accepts `--policy <path-or-pkg>` and `--per-area`. |
-| `/generate-instructions` | **Generate** — wraps `agentrc instructions` to write `AGENTS.md` (recommended) or `.github/copilot-instructions.md`. Supports `flat`/`nested` strategies, monorepo `--areas`, and `--claude-md`. |
+| `/generate-instructions` | **Generate** — wraps `agentrc instructions` to write `.github/copilot-instructions.md` (default) or `AGENTS.md`. Supports `flat`/`nested` strategies and emits per-area `.github/instructions/<area>.instructions.md` files with `applyTo` globs for monorepos. |
 | `/policy` | **Maintain** — helps you pick, scaffold, or apply an AgentRC policy. Knows the schema (`criteria.disable` / `criteria.override` / `extras` / `thresholds`), the impact-weight table, and CI gating with `--fail-level`. |
 
 ## What gets produced
@@ -65,11 +65,32 @@ In Copilot chat:
 /assess                                  # measure → reports/index.html
 /assess --policy ./policies/strict.json  # measure with a policy
 /generate-instructions                    # asks: flat or nested?
-/generate-instructions --strategy flat    # one AGENTS.md at the repo root
+/generate-instructions --strategy flat    # one .github/copilot-instructions.md
 /generate-instructions --strategy nested  # hub + per-topic files in .agents/
+/generate-instructions --areas            # also emit per-area .instructions.md with applyTo
+/generate-instructions --area frontend --apply-to "apps/frontend/**"
 /policy new my-policy                     # scaffold a custom policy
 @ai-readiness-reporter                    # invoke the reporter directly
 ```
+
+### Output: VS Code-native by default
+
+`/generate-instructions` writes to `.github/copilot-instructions.md` by default — the file VS Code Copilot picks up automatically as always-on instructions. Pass `--output AGENTS.md` if you want the multi-agent format instead (Copilot + Claude + others).
+
+### Per-area instructions with `applyTo`
+
+For monorepos with `agentrc.config.json` areas, the skill also emits VS Code `.instructions.md` files — one per area — at `.github/instructions/<area>.instructions.md`. Each file starts with frontmatter so VS Code only loads it when the active file matches:
+
+```markdown
+---
+applyTo: "apps/frontend/**"
+---
+
+# Frontend area instructions
+…
+```
+
+The skill reads each area's `paths` from `agentrc.config.json` and uses that as the `applyTo` glob. You can override on a single-area call with `--apply-to "<glob>"`. The root `.github/copilot-instructions.md` always loads; `.instructions.md` files layer on top for matching paths.
 
 ### Flat vs nested instructions
 
@@ -89,10 +110,11 @@ In Copilot chat:
 You can also pass options directly:
 
 ```text
+/generate-instructions --output .github/copilot-instructions.md --strategy flat
 /generate-instructions --output AGENTS.md --strategy flat
 /generate-instructions --strategy nested --claude-md
 /generate-instructions --strategy nested --areas
-/generate-instructions --area frontend                # only one area
+/generate-instructions --area frontend --apply-to "apps/frontend/**"
 /generate-instructions --strategy flat --dry-run      # preview, no writes
 ```
 
