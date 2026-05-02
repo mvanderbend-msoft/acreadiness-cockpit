@@ -1,16 +1,28 @@
 {
-  "$schema": "https://raw.githubusercontent.com/microsoft/agentrc/main/.github/plugin/marketplace.schema.json",
   "name": "acreadiness-cockpit-marketplace",
-  "description": "AI-readiness cockpit plugin for GitHub Copilot",
+  "metadata": {
+    "description": "AI-readiness cockpit plugin for GitHub Copilot — browser dashboard powered by Microsoft AgentRC",
+    "version": "0.1.0"
+  },
+  "owner": {
+    "name": "mvanderbend-msoft"
+  },
   "plugins": [
     {
       "name": "acreadiness-cockpit",
-      "description": "Browser-based AgentRC cockpit with readiness, history, artifacts, and evals.",
+      "source": ".",
+      "description": "Browser-based AgentRC cockpit with readiness, artifacts, conversation history, evals, and quick actions.",
       "version": "0.1.0",
-      "source": {
-        "type": "github",
-        "repo": "mvanderbend-msoft/acreadiness-cockpit"
-      }
+      "skills": [
+        "./skills/cockpit",
+        "./skills/cockpit-refresh",
+        "./skills/cockpit-eval"
+      ],
+      "agents": [
+        "./agents/readiness-coach.agent.md"
+      ],
+      "hooks": "./hooks/hooks.json",
+      "mcpServers": "./.mcp.json"
     }
   ]
 }
