@@ -1,8 +1,8 @@
 {
   "name": "acreadiness-cockpit-marketplace",
   "metadata": {
-    "description": "AI-readiness cockpit plugin for GitHub Copilot — browser dashboard powered by Microsoft AgentRC",
-    "version": "0.1.0"
+    "description": "AI-readiness toolkit for GitHub Copilot — agents and skills powered by Microsoft AgentRC",
+    "version": "0.2.0"
   },
   "owner": {
     "name": "mvanderbend-msoft"
@@ -11,20 +11,16 @@
     {
       "name": "acreadiness-cockpit",
       "source": ".",
-      "description": "Browser-based AgentRC cockpit with readiness, artifacts, conversation history, evals, and quick actions.",
-      "version": "0.1.0",
+      "description": "Custom agents and skills that drive AgentRC: assess maturity, generate instructions, apply policies, and produce a static HTML readiness dashboard.",
+      "version": "0.2.0",
       "skills": [
-        "./skills/cockpit",
-        "./skills/cockpit-refresh",
-        "./skills/cockpit-eval",
-        "./skills/cockpit-report"
+        "./skills/assess",
+        "./skills/generate-instructions",
+        "./skills/policy"
       ],
       "agents": [
-        "./agents/readiness-coach.agent.md",
         "./agents/ai-readiness-reporter.agent.md"
-      ],
-      "hooks": "./hooks/hooks.json",
-      "mcpServers": "./.mcp.json"
+      ]
     }
   ]
 }

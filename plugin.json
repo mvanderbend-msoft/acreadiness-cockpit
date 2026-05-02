@@ -1,13 +1,11 @@
 {
   "name": "acreadiness-cockpit",
-  "description": "Browser-based cockpit for AI-readiness, conversation history, artifacts, and evals — powered by Microsoft AgentRC.",
-  "version": "0.1.0",
+  "description": "AI-readiness toolkit for GitHub Copilot — agents and skills that drive Microsoft AgentRC: assess maturity, generate instructions, apply policies, and produce a static HTML readiness dashboard.",
+  "version": "0.2.0",
   "author": {
-    "name": "acreadiness",
-    "url": "https://github.com/microsoft/agentrc"
+    "name": "mvanderbend-msoft",
+    "url": "https://github.com/mvanderbend-msoft/acreadiness-cockpit"
   },
   "skills": "skills/",
-  "agents": "agents/",
-  "hooks": "hooks/hooks.json",
-  "mcpServers": ".mcp.json"
+  "agents": "agents/"
 }

@@ -1,76 +1,72 @@
 # acreadiness-cockpit
 
-A GitHub Copilot **agent plugin** that turns [Microsoft AgentRC](https://github.com/microsoft/agentrc) into a browser-based **AI-readiness cockpit** for any repo.
+A GitHub Copilot **agent plugin** that drives [Microsoft AgentRC](https://github.com/microsoft/agentrc) through three skills and one custom agent — no servers, no MCP, just chat.
 
-> Visualizes readiness pillars, generated artifacts, conversation history, and eval/drift results — all in plain HTML/CSS/JS, no frameworks, no build step.
+> Frames every interaction inside AgentRC's **Measure → Generate → Maintain** loop.
 
-![overview](docs/overview.png)
+## What's in the plugin
 
-## Features
+### Custom agent
 
-- **Readiness panel** — 9-pillar radar + bar scores, maturity level badge, trend sparkline, drilldown remediation modal.
-- **Artifacts panel** — inventory of `.github/copilot-instructions.md`, `.vscode/mcp.json`, `.vscode/settings.json`, `agentrc.eval.json`, `AGENTS.md` with freshness indicators.
-- **Conversation history** — timeline of prompts and tool calls captured by lifecycle hooks, filterable by session, with a file-touch heatmap.
-- **Evals / drift** — pass/fail counts and per-case detail.
-- **Quick actions** — buttons that run `agentrc readiness | instructions | eval` with live SSE-streamed output.
-- **MCP server `agentrc-live`** — exposes the same data as Copilot tools (`get_readiness`, `run_readiness`, …) for the chat agent.
-- **Hooks** — automatically capture conversation events to populate the history panel.
+| Agent | What it does |
+|---|---|
+| `@ai-readiness-reporter` | Runs `agentrc readiness --json`, interprets every result against the 9-pillar / 5-level model, then writes a self-contained `reports/index.html` you can open with `file://`. Honours policies (disabled criteria, overrides, pass-rate thresholds) and surfaces extras separately. |
+
+### Skills
+
+| Skill | What it does |
+|---|---|
+| `/assess` | **Measure** — runs the readiness scan and hands off to `@ai-readiness-reporter` to produce the static HTML dashboard. Accepts `--policy <path-or-pkg>` and `--per-area`. |
+| `/generate-instructions` | **Generate** — wraps `agentrc instructions` to write `AGENTS.md` (recommended) or `.github/copilot-instructions.md`. Supports `flat`/`nested` strategies, monorepo `--areas`, and `--claude-md`. |
+| `/policy` | **Maintain** — helps you pick, scaffold, or apply an AgentRC policy. Knows the schema (`criteria.disable` / `criteria.override` / `extras` / `thresholds`), the impact-weight table, and CI gating with `--fail-level`. |
+
+## What gets produced
+
+`reports/index.html` — a single self-contained HTML file with:
+
+- Maturity badge (L1–L5) and overall score / grade (A–F)
+- Pass-rate vs threshold (when a policy sets one)
+- Maturity progression table ("◼ You are here")
+- **Active policy** summary (disabled/overridden criteria, threshold)
+- **Repo Health** breakdown (8 pillars) — *what it measures*, *why it matters for AI*, *recommendation*
+- **AI Setup** breakdown (AI Tooling pillar)
+- **Extras** (informational only — agents-doc, pr-template, pre-commit, architecture-doc)
+- **Prioritised Remediation Plan** (🔴 Fix First / 🟡 Fix Next / 🔵 Plan)
+- Embedded raw AgentRC JSON for re-use
 
 ## Prerequisites
 
-- **Node.js 20+** (required by AgentRC)
+- **Node.js 20+** on PATH (required by AgentRC)
 - VS Code with Copilot agent plugins enabled (`chat.plugins.enabled`)
 
 ## Install
 
-### From source (VS Code)
+### Option A — marketplace (recommended)
 
-`Extensions` → **Agent Plugins** → **Install from Source…**, then point at this repo URL:
-
-```
-https://github.com/mvanderbend-msoft/acreadiness-cockpit
-```
-
-### From a marketplace manifest
+In VS Code: **Extensions → Agent Plugins → Add Marketplace**, then paste:
 
 ```
 https://raw.githubusercontent.com/mvanderbend-msoft/acreadiness-cockpit/main/.github/plugin/marketplace.json
+```
+
+### Option B — install from source
+
+**Extensions → Agent Plugins → Install from Source…**:
+
+```
+https://github.com/mvanderbend-msoft/acreadiness-cockpit
 ```
 
 ## Usage
 
 In Copilot chat:
 
-```
-/cockpit            # launches the dashboard server and opens it in your browser
-/cockpit-refresh    # re-runs `agentrc readiness` and updates artifacts
-/cockpit-eval       # re-runs `agentrc eval`
-@readiness-coach    # ask the coaching agent for targeted improvements
-```
-
-The dashboard is served at `http://127.0.0.1:4717` (or the next free port).
-
-## Data
-
-All cockpit data is stored under `<repo>/.agentrc-cockpit/`:
-
-| File | Purpose |
-| --- | --- |
-| `readiness.json` | Latest readiness output |
-| `readiness-history.jsonl` | Append-only snapshots for trend |
-| `history.jsonl` | Conversation events from hooks |
-| `artifacts.json` | Generated-file inventory |
-| `evals.json` | Latest eval results |
-| `state.json` | Server port + start time |
-
-Add `.agentrc-cockpit/` to your `.gitignore`.
-
-## Manual (non-Copilot) usage
-
-You can also run the dashboard standalone:
-
-```bash
-node acreadiness-cockpit/scripts/server.js --open
+```text
+/assess                                  # measure → reports/index.html
+/assess --policy ./policies/strict.json  # measure with a policy
+/generate-instructions                    # generate AGENTS.md
+/policy new my-policy                     # scaffold a custom policy
+@ai-readiness-reporter                    # invoke the reporter directly
 ```
 
 ## Layout
@@ -78,14 +74,24 @@ node acreadiness-cockpit/scripts/server.js --open
 ```
 acreadiness-cockpit/
   plugin.json
-  .mcp.json
-  hooks/hooks.json
-  skills/{cockpit,cockpit-refresh,cockpit-eval}/SKILL.md
-  agents/readiness-coach.agent.md
-  scripts/{server.js,run-agentrc.js,record-event.js}
-  mcp/agentrc-mcp.js
-  dashboard/{index.html,styles.css,app.js,components/*}
+  agents/
+    ai-readiness-reporter.agent.md
+  skills/
+    assess/SKILL.md
+    generate-instructions/SKILL.md
+    policy/SKILL.md
+  .github/plugin/marketplace.json
+  README.md
 ```
+
+## Concepts (cheat sheet)
+
+- **Maturity**: L1 Functional → L2 Documented → L3 Standardized → L4 Optimized → L5 Autonomous
+- **Pillars** (Repo Health): Style · Build · Testing · Docs · Dev Environment · Code Quality · Observability · Security
+- **Pillars** (AI Setup): AI Tooling
+- **Impact weights**: critical 5 · high 4 · medium 3 · low 2 · info 0
+- **Grades**: A ≥ 0.9 · B ≥ 0.8 · C ≥ 0.7 · D ≥ 0.6 · F < 0.6
+- **Loop**: Measure (`/assess`) → Generate (`/generate-instructions`) → Maintain (`/policy` + CI `--fail-level`)
 
 ## License
 

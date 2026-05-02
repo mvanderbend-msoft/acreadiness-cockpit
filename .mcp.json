@@ -1,9 +1,0 @@
-{
-  "servers": {
-    "agentrc-live": {
-      "type": "stdio",
-      "command": "node",
-      "args": ["${COPILOT_PLUGIN_ROOT}/mcp/agentrc-mcp.js"]
-    }
-  }
-}
