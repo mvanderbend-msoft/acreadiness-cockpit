@@ -67,11 +67,11 @@ The level is computed by AgentRC from the readiness score. Use `--fail-level n` 
 
 ## Readiness Pillars (9)
 
-Every pillar carries an **AI relevance** rating that drives the *AI Only* tab in the report:
+Every pillar carries an **AI relevance** rating shown as a badge on its card in the report:
 
-- **High** — directly steers what an AI agent generates or how it self-checks. Always shown in the AI-only view.
-- **Medium** — influences agent output quality but indirectly. Shown in the AI-only view.
-- **Low** — general engineering hygiene with weaker AI leverage. Hidden by default in the AI-only view.
+- **High** — directly steers what an AI agent generates or how it self-checks.
+- **Medium** — influences agent output quality but indirectly.
+- **Low** — general engineering hygiene with weaker AI leverage.
 
 ### Repo Health (8 pillars)
 
@@ -151,252 +151,63 @@ When in doubt, prefer the higher bucket if the pillar is `Docs`, `Testing`, `Bui
 
 ---
 
-## HTML Template
+## HTML Template — DO NOT IMPROVISE
 
-Produce **one file** at `reports/index.html`. Use this skeleton (fill placeholders with real data from the JSON; expand sections as needed; keep the inline CSS clean and modern). All HTML/CSS must be self-contained.
+The look & feel of `reports/index.html` is **fixed** and shared across all consumers of this plugin. The canonical template lives at:
 
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AI Readiness — {{repoName}}</title>
-  <style>
-    :root {
-      --bg:#0f1115; --panel:#161a22; --panel-2:#1d2230; --border:#262c3a;
-      --text:#e6e9ef; --muted:#8a93a6; --accent:#6ea8ff;
-      --good:#4ade80; --warn:#fbbf24; --bad:#f87171;
-    }
-    * { box-sizing: border-box; }
-    html,body { margin:0; background:var(--bg); color:var(--text);
-      font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
-    a { color: var(--accent); }
-    header { padding: 28px 32px; border-bottom: 1px solid var(--border);
-      background: linear-gradient(180deg,#141823,#0f1115); }
-    header h1 { margin: 0 0 4px; font-size: 22px; }
-    header .meta { color: var(--muted); font-size: 13px; }
-    main { max-width: 1180px; margin: 0 auto; padding: 24px 32px 80px; }
-    .panel { background:var(--panel); border:1px solid var(--border);
-      border-radius:10px; padding:20px; margin-bottom:18px; }
-    .grid { display:grid; gap:16px; }
-    .grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
-    .grid.cols-2 { grid-template-columns: 1fr 1fr; }
-    .kpi .num { font-size: 30px; font-weight: 700; }
-    .kpi .lbl { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .8px; }
-    .badge { display:inline-block; padding:3px 10px; border-radius:999px;
-      font-size:12px; font-weight:600; }
-    .lvl-1 { background:#3a1f24; color:#f87171; }
-    .lvl-2 { background:#3b2c1d; color:#fbbf24; }
-    .lvl-3 { background:#2c3119; color:#d3e85e; }
-    .lvl-4 { background:#1d3325; color:#4ade80; }
-    .lvl-5 { background:#1c2c3d; color:#6ea8ff; }
-    .bar { height:8px; background:var(--panel-2); border-radius:4px; overflow:hidden; }
-    .bar > span { display:block; height:100%; background: var(--accent); }
-    .bar.good > span { background: var(--good); }
-    .bar.warn > span { background: var(--warn); }
-    .bar.bad  > span { background: var(--bad); }
-    table { width:100%; border-collapse:collapse; }
-    th,td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--border); font-size:13px; }
-    th { color:var(--muted); font-weight:500; text-transform:uppercase; font-size:11px; letter-spacing:.8px; }
-    code { background:#0a0c11; padding:1px 6px; border-radius:4px; }
-    h2 { font-size:14px; color:var(--muted); text-transform:uppercase; letter-spacing:.8px; margin:0 0 12px; }
-    .pillar h3 { margin:0 0 6px; font-size:15px; display:flex; align-items:center; gap:10px; }
-    .dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
-    .dot.good { background:var(--good); } .dot.warn { background:var(--warn); } .dot.bad { background:var(--bad); }
-    footer { color: var(--muted); font-size: 12px; text-align: center; padding: 20px; }
-
-    /* Tabs */
-    .tabs { display:flex; gap:4px; margin: 4px 0 18px; border-bottom:1px solid var(--border); }
-    .tab { background:transparent; border:0; color:var(--muted); padding:10px 16px;
-      font:inherit; cursor:pointer; border-bottom:2px solid transparent; }
-    .tab[aria-selected="true"] { color:var(--text); border-bottom-color:var(--accent); }
-    .tab:hover { color:var(--text); }
-    .tab .count { color:var(--muted); font-size:11px; margin-left:6px; }
-
-    /* Pillar cards */
-    .pillar { background:var(--panel-2); border:1px solid var(--border);
-      border-radius:8px; padding:14px 16px; }
-    .pillar h3 { margin:0 0 6px; font-size:15px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-    .pillar .why { color:var(--muted); font-size:13px; margin:8px 0 0; }
-    .pillar .what { font-size:13px; margin:6px 0 0; }
-    .pillar .rec { font-size:13px; margin:8px 0 0; }
-    .rel { font-size:10px; padding:2px 8px; border-radius:999px; text-transform:uppercase; letter-spacing:.6px; font-weight:600; }
-    .rel.high   { background:#1c2c3d; color:#6ea8ff; }
-    .rel.medium { background:#2c3119; color:#d3e85e; }
-    .rel.low    { background:#262c3a; color:#8a93a6; }
-
-    /* View toggling — driven by data-view on <main> */
-    main[data-view="ai"] [data-ai-relevance="low"] { display:none; }
-  </style>
-</head>
-<body>
-  <header>
-    <h1>AI Readiness Report</h1>
-    <div class="meta">
-      <strong>{{repoName}}</strong> · Assessed {{date}} ·
-      <span class="badge lvl-{{level}}">L{{level}} — {{levelName}}</span> ·
-      Overall <strong>{{overallPct}}%</strong> · Grade <strong>{{grade}}</strong>
-      {{#policy}} · Policy <code>{{policyName}}</code>{{/policy}}
-    </div>
-  </header>
-
-  <main data-view="ai">
-
-    <!-- View toggle: AI Only vs All -->
-    <div class="tabs" role="tablist" aria-label="Report view">
-      <button class="tab" role="tab" aria-selected="true"  data-view-target="ai"
-        onclick="setView('ai')">AI Only <span class="count">(high + medium relevance)</span></button>
-      <button class="tab" role="tab" aria-selected="false" data-view-target="all"
-        onclick="setView('all')">All <span class="count">(every pillar)</span></button>
-    </div>
-
-    <!-- 1. What is AI Readiness? -->
-    <section class="panel">
-      <h2>What is AI Readiness?</h2>
-      <p>AI coding agents are only as effective as the context they receive. AgentRC measures how AI-ready a repo is across <strong>9 pillars</strong> in two categories — Repo Health and AI Setup — and maps the result to a <strong>5-level maturity model</strong>. This report is the <em>Measure</em> step in AgentRC's <em>Measure → Generate → Maintain</em> loop.</p>
-      <p style="color:var(--muted);font-size:13px;margin-top:8px"><strong>AI Only</strong> hides pillars whose AI relevance is "low" (Observability, Security) so you focus on the changes that most directly improve agent output. Switch to <strong>All</strong> to see every pillar including general engineering hygiene.</p>
-    </section>
-
-    <!-- 2. KPIs -->
-    <section class="grid cols-3">
-      <div class="panel kpi"><span class="lbl">Maturity</span><div class="num"><span class="badge lvl-{{level}}">L{{level}} — {{levelName}}</span></div></div>
-      <div class="panel kpi"><span class="lbl">Overall Score</span><div class="num">{{overallPct}}%</div><div style="color:var(--muted);font-size:12px">Grade {{grade}}</div></div>
-      <div class="panel kpi"><span class="lbl">Pass rate</span><div class="num">{{passRatePct}}%</div><div style="color:var(--muted);font-size:12px">Threshold {{thresholdPct}}%</div></div>
-    </section>
-
-    <!-- 3. Maturity progression -->
-    <section class="panel">
-      <h2>Maturity Progression</h2>
-      <table>
-        <thead><tr><th>Level</th><th>Name</th><th>Status</th></tr></thead>
-        <tbody>
-          <!-- Render levels 5 → 1 with the current level marked "◼ You are here" -->
-        </tbody>
-      </table>
-    </section>
-
-    <!-- 4. Active policy -->
-    <section class="panel">
-      <h2>Active Policy</h2>
-      <!-- If user supplied a policy: name, source, summary of disabled/overridden criteria, thresholds. -->
-      <!-- If none: "Default policy (built-in defaults)" + link to AgentRC examples. -->
-    </section>
-
-    <!-- 5. Repo Health Pillars -->
-    <section class="panel">
-      <h2>Repo Health Breakdown</h2>
-      <div class="grid cols-2">
-        <!--
-          One .pillar block per Repo Health pillar. Each block MUST set
-          data-ai-relevance="high|medium|low" on the wrapping element so the
-          AI Only / All tabs work. Suggested mapping:
-            Style          -> medium
-            Build          -> high
-            Testing        -> high
-            Docs           -> high
-            Dev Environment-> medium
-            Code Quality   -> medium
-            Observability  -> low
-            Security       -> low
-
-          Block template:
-          <div class="pillar" data-ai-relevance="high">
-            <h3>
-              <span class="dot good"></span>
-              Docs
-              <span class="rel high">AI relevance: High</span>
-              <span style="margin-left:auto;color:var(--muted);font-size:13px">{{score}}%</span>
-            </h3>
-            <div class="bar good"><span style="width:{{score}}%"></span></div>
-            <p class="what"><strong>What it measures:</strong> {{whatItChecks}}</p>
-            <p class="why"><strong>Why it matters for AI:</strong> {{fullAiExplanation}}</p>
-            <p class="rec"><strong>Current state:</strong> {{currentState}}</p>
-            <p class="rec"><strong>Recommendation:</strong> {{specificAction}}</p>
-          </div>
-        -->
-      </div>
-    </section>
-
-    <!-- 6. AI Setup Pillars -->
-    <section class="panel">
-      <h2>AI Setup Breakdown</h2>
-      <div class="grid cols-2">
-        <!-- AI Tooling pillar block — always data-ai-relevance="high" -->
-      </div>
-    </section>
-
-    <!-- 7. Extras -->
-    <section class="panel">
-      <h2>Extras (informational, do not affect score)</h2>
-      <table>
-        <thead><tr><th></th><th>Extra</th><th>Status</th></tr></thead>
-        <tbody>
-          <!-- agents-doc, pr-template, pre-commit, architecture-doc rows -->
-        </tbody>
-      </table>
-    </section>
-
-    <!-- 8. Prioritised Remediation Plan -->
-    <section class="panel">
-      <h2>Prioritised Remediation Plan</h2>
-      <h3 style="color:var(--bad)">🔴 Fix First (high impact / low effort)</h3>
-      <table><thead><tr><th>#</th><th>Finding</th><th>File / config</th><th>Why it matters</th></tr></thead><tbody><!-- ... --></tbody></table>
-      <h3 style="color:var(--warn)">🟡 Fix Next (medium impact / low effort)</h3>
-      <table><thead><tr><th>#</th><th>Finding</th><th>File / config</th><th>Why</th></tr></thead><tbody><!-- ... --></tbody></table>
-      <h3 style="color:var(--accent)">🔵 Plan (medium impact / medium effort)</h3>
-      <table><thead><tr><th>#</th><th>Finding</th><th>File / config</th><th>Why</th></tr></thead><tbody><!-- ... --></tbody></table>
-    </section>
-
-    <!-- 9. Next steps -->
-    <section class="panel">
-      <h2>Next Steps</h2>
-      <ol>
-        <li>Generate or refresh instructions: <code>agentrc instructions --output AGENTS.md</code> (or use the <code>generate-instructions</code> skill).</li>
-        <li>Address each item under <strong>🔴 Fix First</strong>; re-run this report to confirm score improvement.</li>
-        <li>Codify org standards via a JSON policy (<code>strict.json</code>, <code>ai-only.json</code>, …) and re-run with <code>--policy</code>.</li>
-        <li>Wire <code>agentrc readiness --fail-level &lt;n&gt;</code> into CI to prevent regressions.</li>
-      </ol>
-    </section>
-
-    <!-- 10. Raw data (for tools / future re-renders) -->
-    <details class="panel">
-      <summary style="cursor:pointer;color:var(--muted)">Raw AgentRC JSON</summary>
-      <pre style="overflow:auto;font-size:11px;color:#b8c0d2">{{rawJsonPretty}}</pre>
-    </details>
-    <script type="application/json" id="raw-data">{{rawJsonCompact}}</script>
-  </main>
-
-  <script>
-    function setView(v) {
-      var main = document.querySelector('main');
-      main.setAttribute('data-view', v);
-      document.querySelectorAll('.tab').forEach(function (t) {
-        t.setAttribute('aria-selected', t.getAttribute('data-view-target') === v ? 'true' : 'false');
-      });
-    }
-  </script>
-
-  <footer>
-    Generated by <a href="https://github.com/mvanderbend-msoft/acreadiness-cockpit">acreadiness-cockpit</a>
-    · powered by <a href="https://github.com/microsoft/agentrc">microsoft/agentrc</a>.
-  </footer>
-</body>
-</html>
 ```
+${COPILOT_PLUGIN_ROOT}/agents/report-template.html
+```
+
+You MUST:
+
+1. **Read** `report-template.html` from the plugin root using the `read` tool.
+2. **Substitute every `{{placeholder}}`** with concrete data from the AgentRC JSON. Repeat the marked blocks (pillar cards, plan rows, maturity rows, extras rows) once per item. Remove the *Active Policy* `<section>` entirely if no policy is active.
+3. **Write the substituted result** to `reports/index.html` using the `editFiles` tool. Create `reports/` if missing.
+
+Hard rules — do **not** deviate:
+
+- Do not change the HTML structure, class names, CSS variables, or the `<style>` block.
+- Do not add tabs, toggles, theme switches, dark/light variants, or extra navigation. The report is a single, unified view.
+- Do not add external CSS, fonts, JS frameworks, or analytics. The file must open with `file://` and have zero network dependencies.
+- Preserve the embedded `<script type="application/json" id="raw-data">…</script>` block so the report is self-describing.
+
+Placeholders the template uses (all required unless marked optional):
+
+| Placeholder | Source |
+|---|---|
+| `{{repoName}}` | repository name (folder name or git remote) |
+| `{{date}}` | ISO date the report was generated |
+| `{{level}}` / `{{levelName}}` | AgentRC maturity level number + name |
+| `{{overallPct}}` / `{{grade}}` | overall score as integer percent + letter grade |
+| `{{passRatePct}}` / `{{thresholdPct}}` | pass rate vs policy threshold (use `—` if N/A) |
+| `{{policyName}}` / `{{policySummary}}` | only if a policy is active; otherwise omit the policy section |
+| `{{rawJsonCompact}}` / `{{rawJsonPretty}}` | embed the AgentRC JSON envelope |
+
+Per-pillar placeholders (repeat the `.pillar` block once per pillar):
+
+| Placeholder | Source |
+|---|---|
+| `{{pillarName}}` | "Style", "Build", "Testing", … |
+| `{{pillarScore}}` | integer percent for this pillar |
+| `{{pillarStatus}}` | `good` / `warn` / `bad` (drives the bar + dot colour) |
+| `{{pillarRelevance}}` | `high` / `medium` / `low` — AI relevance from the table above |
+| `{{pillarWhat}}` | what AgentRC checks for this pillar |
+| `{{pillarWhyAi}}` | the **full paragraph** from the pillar table (not a one-liner) |
+| `{{pillarCurrent}}` | concrete current state (e.g. "ESLint config present, 2 warnings") |
+| `{{pillarRecommendation}}` | specific file / config to add or edit |
 
 ---
 
 ## Operating Rules
 
 1. **Always run `agentrc readiness --json`** — never fabricate data.
-2. **Always write a single self-contained `reports/index.html`** — no external dependencies, opens with `file://`.
-3. **Explain every pillar** — *what it measures* + *why it matters for AI* (use the full per-pillar paragraph from the table above, not a one-liner) + *current state* + *the specific recommendation*.
-4. **Tag each pillar card with `data-ai-relevance="high|medium|low"`** matching the table above so the *AI Only / All* tabs filter correctly. AI Only hides `low`.
-5. **Render an "AI relevance" badge** (`<span class="rel high|medium|low">`) inside every pillar header so users can see the rating in either view.
-6. **Connect every Repo Health finding to AI impact** — repo health is not generic devops here; frame it through how it helps Copilot and other agents.
-7. **Honour policies** — if a policy is in scope, reflect its disable/override/threshold rules in the rendered report.
-8. **Show extras separately** — they never affect the score; never list them as gaps.
-9. **Frame next steps via AgentRC's loop** — Measure (this report) → Generate (`agentrc instructions`) → Maintain (CI `--fail-level`).
-10. **Only write `reports/index.html`** — do not modify any other files. Create the `reports/` directory if missing.
-11. **No fluff** — every paragraph in the report must add concrete information.
+2. **Always render via `agents/report-template.html`** — load the template, substitute placeholders, write to `reports/index.html`. Don't author HTML from scratch.
+3. **Explain every pillar** — use the full per-pillar paragraph from the table above, plus *current state* and *specific recommendation*. No one-liners.
+4. **Tag each pillar with its AI relevance** (`high` / `medium` / `low`) so the badge matches the table above.
+5. **Connect every Repo Health finding to AI impact** — repo health is not generic devops here; frame it through how it helps Copilot and other agents.
+6. **Honour policies** — if a policy is in scope, reflect its disable/override/threshold rules in the rendered report.
+7. **Show extras separately** — they never affect the score; never list them as gaps.
+8. **Frame next steps via AgentRC's loop** — Measure (this report) → Generate (`agentrc instructions`) → Maintain (CI `--fail-level`).
+9. **Only write `reports/index.html`** — do not modify any other files. Create the `reports/` directory if missing.
+10. **No fluff** — every paragraph in the report must add concrete information.

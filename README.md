@@ -22,13 +22,13 @@ A GitHub Copilot **agent plugin** that drives [Microsoft AgentRC](https://github
 
 ## What gets produced
 
-`reports/index.html` — a single self-contained HTML file with:
+`reports/index.html` — a single self-contained HTML file rendered from a fixed template (`agents/report-template.html` in the plugin) so the report looks identical for every user. It contains:
 
 - Maturity badge (L1–L5) and overall score / grade (A–F)
 - Pass-rate vs threshold (when a policy sets one)
 - Maturity progression table ("◼ You are here")
 - **Active policy** summary (disabled/overridden criteria, threshold)
-- **Repo Health** breakdown (8 pillars) — *what it measures*, *why it matters for AI*, *recommendation*
+- **Repo Health** breakdown (8 pillars) — each card shows *AI relevance* (High/Medium/Low), *what it measures*, *why it matters for AI*, *current state*, *recommendation*
 - **AI Setup** breakdown (AI Tooling pillar)
 - **Extras** (informational only — agents-doc, pr-template, pre-commit, architecture-doc)
 - **Prioritised Remediation Plan** (🔴 Fix First / 🟡 Fix Next / 🔵 Plan)
@@ -128,6 +128,7 @@ acreadiness-cockpit/
   plugin.json
   agents/
     ai-readiness-reporter.agent.md
+    report-template.html       # canonical HTML/CSS template for reports/index.html
   skills/
     assess/SKILL.md
     generate-instructions/SKILL.md
