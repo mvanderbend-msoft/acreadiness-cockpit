@@ -64,9 +64,36 @@ In Copilot chat:
 ```text
 /assess                                  # measure → reports/index.html
 /assess --policy ./policies/strict.json  # measure with a policy
-/generate-instructions                    # generate AGENTS.md
+/generate-instructions                    # asks: flat or nested?
+/generate-instructions --strategy flat    # one AGENTS.md at the repo root
+/generate-instructions --strategy nested  # hub + per-topic files in .agents/
 /policy new my-policy                     # scaffold a custom policy
 @ai-readiness-reporter                    # invoke the reporter directly
+```
+
+### Flat vs nested instructions
+
+`/generate-instructions` always asks which layout you want unless you pass `--strategy` explicitly. Pick based on the shape of your repo:
+
+| | **Flat** *(default)* | **Nested** |
+|---|---|---|
+| Output | One `AGENTS.md` at the repo root | Hub `AGENTS.md` at the root + per-topic detail files in `.agents/` (e.g. `.agents/build.md`, `.agents/testing.md`) |
+| Best for | Small / medium repos, single stack, single team | Large or multi-stack repos, monorepos, multiple teams |
+| Review | One file, one PR | Multiple smaller files — each topic can be reviewed by its owners |
+| Token cost for the agent | Lowest — the whole file always loads | Lower per-task — agents pull only the topics they need |
+| Optional | — | Add `--claude-md` to also emit `CLAUDE.md` |
+| Monorepos | Combine with `--areas` for area-scoped variants | Combine with `--areas` for hub + per-area detail trees |
+
+**Rule of thumb:** start with `flat`. Switch to `nested` once `AGENTS.md` grows beyond ~300 lines, you have more than 5 top-level directories, or different parts of the repo have meaningfully different conventions.
+
+You can also pass options directly:
+
+```text
+/generate-instructions --output AGENTS.md --strategy flat
+/generate-instructions --strategy nested --claude-md
+/generate-instructions --strategy nested --areas
+/generate-instructions --area frontend                # only one area
+/generate-instructions --strategy flat --dry-run      # preview, no writes
 ```
 
 ## Layout
