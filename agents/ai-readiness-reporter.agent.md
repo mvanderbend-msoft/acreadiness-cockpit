@@ -67,24 +67,30 @@ The level is computed by AgentRC from the readiness score. Use `--fail-level n` 
 
 ## Readiness Pillars (9)
 
+Every pillar carries an **AI relevance** rating that drives the *AI Only* tab in the report:
+
+- **High** — directly steers what an AI agent generates or how it self-checks. Always shown in the AI-only view.
+- **Medium** — influences agent output quality but indirectly. Shown in the AI-only view.
+- **Low** — general engineering hygiene with weaker AI leverage. Hidden by default in the AI-only view.
+
 ### Repo Health (8 pillars)
 
-| Pillar | What it checks | Why it matters for AI |
-|---|---|---|
-| **Style** | Linter config (ESLint/Biome/Prettier), type-checking (TypeScript/Mypy) | Agents produce more consistent code when lint rules are explicit. |
-| **Build** | Build script in package.json, CI workflow config | Agents need a way to verify their own changes. |
-| **Testing** | Test script, area-scoped test scripts | Tests are the agent's automated quality gate. |
-| **Docs** | README, CONTRIBUTING, area-scoped READMEs | Docs are the agent's primary context source. |
-| **Dev Environment** | Lockfile, `.env.example` | Reproducible envs let agents install and run locally. |
-| **Code Quality** | Formatter config (Prettier/Biome) | Prevents agent-generated code triggering style noise in PRs. |
-| **Observability** | OpenTelemetry / Pino / Winston / Bunyan | Agents instrument new code correctly when patterns are visible. |
-| **Security** | LICENSE, CODEOWNERS, SECURITY.md, Dependabot | CODEOWNERS routes AI-generated PRs to the right reviewers. |
+| Pillar | AI relevance | What it checks | Why it matters for AI (full explanation) |
+|---|---|---|---|
+| **Style** | Medium | Linter config (ESLint/Biome/Prettier), type-checking (TypeScript/Mypy) | Lint and type rules are the most explicit form of "house style" an agent can read. With them in place, Copilot generates code that passes review on the first try; without them, the agent has to guess at conventions and PRs churn on style nits. |
+| **Build** | High | Build script in package.json, CI workflow config | An agent without a build command cannot self-verify. A canonical `npm run build` (and a CI workflow that mirrors it) lets the agent compile, catch type errors, and iterate before opening a PR — the difference between "works on my machine" and a clean check run. |
+| **Testing** | High | Test script, area-scoped test scripts | Tests are the agent's automated quality gate. With a `test` script the agent can run TDD loops and prove behaviour; with area-scoped tests it can run only what's relevant and stay fast. No tests = no objective signal for the agent to know when it's done. |
+| **Docs** | High | README, CONTRIBUTING, area-scoped READMEs | Docs are the agent's primary *context source*. README explains the stack, CONTRIBUTING explains the process, area READMEs explain local conventions. Repos with rich docs see dramatically better Copilot suggestions because the model is grounded in real intent instead of guessing from filenames. |
+| **Dev Environment** | Medium | Lockfile, `.env.example` | A lockfile pins versions so the agent's `npm install` matches CI. `.env.example` tells the agent which env vars exist without leaking secrets. Together they make the agent's local runs reproducible and stop it from inventing config that doesn't apply. |
+| **Code Quality** | Medium | Formatter config (Prettier/Biome) | A formatter config means the agent's output lands pre-formatted — no diff noise, no review comments about whitespace. Without it, AI-generated PRs trigger style discussions that drown out real feedback. |
+| **Observability** | Low | OpenTelemetry / Pino / Winston / Bunyan | When logging/tracing libraries are visible in the dependency graph, the agent instruments new code with the same patterns instead of `console.log`. Lower leverage than docs/tests because the agent only needs it for the subset of work that touches runtime instrumentation. |
+| **Security** | Low | LICENSE, CODEOWNERS, SECURITY.md, Dependabot | CODEOWNERS routes AI-generated PRs to the right reviewers automatically. SECURITY.md and Dependabot tell the agent how to handle vulnerability reports and dependency bumps. Important for governance, but rarely changes what code the agent writes day-to-day. |
 
 ### AI Setup (1 pillar)
 
-| Pillar | What it checks | Why it matters |
-|---|---|---|
-| **AI Tooling** | Custom instructions (`.github/copilot-instructions.md`, `AGENTS.md`, `CLAUDE.md`), MCP servers, agent configs, AI skills | Direct interface between repo and AI agents — the highest-leverage pillar. |
+| Pillar | AI relevance | What it checks | Why it matters |
+|---|---|---|---|
+| **AI Tooling** | High | Custom instructions (`.github/copilot-instructions.md`, `AGENTS.md`, `CLAUDE.md`), MCP servers, agent configs, AI skills | The direct interface between repo and AI agents — the highest-leverage pillar in the entire model. A good `AGENTS.md` is worth more than every other pillar combined: it tells the agent your stack, conventions, build commands, test commands, and review expectations in one place. MCP servers and custom skills extend the agent's reach into your tools. |
 
 At Level 2+, AgentRC also checks **instruction consistency** — flag any divergence between multiple instruction files and recommend consolidation (preferring `AGENTS.md`).
 
@@ -199,6 +205,29 @@ Produce **one file** at `reports/index.html`. Use this skeleton (fill placeholde
     .dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
     .dot.good { background:var(--good); } .dot.warn { background:var(--warn); } .dot.bad { background:var(--bad); }
     footer { color: var(--muted); font-size: 12px; text-align: center; padding: 20px; }
+
+    /* Tabs */
+    .tabs { display:flex; gap:4px; margin: 4px 0 18px; border-bottom:1px solid var(--border); }
+    .tab { background:transparent; border:0; color:var(--muted); padding:10px 16px;
+      font:inherit; cursor:pointer; border-bottom:2px solid transparent; }
+    .tab[aria-selected="true"] { color:var(--text); border-bottom-color:var(--accent); }
+    .tab:hover { color:var(--text); }
+    .tab .count { color:var(--muted); font-size:11px; margin-left:6px; }
+
+    /* Pillar cards */
+    .pillar { background:var(--panel-2); border:1px solid var(--border);
+      border-radius:8px; padding:14px 16px; }
+    .pillar h3 { margin:0 0 6px; font-size:15px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .pillar .why { color:var(--muted); font-size:13px; margin:8px 0 0; }
+    .pillar .what { font-size:13px; margin:6px 0 0; }
+    .pillar .rec { font-size:13px; margin:8px 0 0; }
+    .rel { font-size:10px; padding:2px 8px; border-radius:999px; text-transform:uppercase; letter-spacing:.6px; font-weight:600; }
+    .rel.high   { background:#1c2c3d; color:#6ea8ff; }
+    .rel.medium { background:#2c3119; color:#d3e85e; }
+    .rel.low    { background:#262c3a; color:#8a93a6; }
+
+    /* View toggling — driven by data-view on <main> */
+    main[data-view="ai"] [data-ai-relevance="low"] { display:none; }
   </style>
 </head>
 <body>
@@ -212,11 +241,21 @@ Produce **one file** at `reports/index.html`. Use this skeleton (fill placeholde
     </div>
   </header>
 
-  <main>
+  <main data-view="ai">
+
+    <!-- View toggle: AI Only vs All -->
+    <div class="tabs" role="tablist" aria-label="Report view">
+      <button class="tab" role="tab" aria-selected="true"  data-view-target="ai"
+        onclick="setView('ai')">AI Only <span class="count">(high + medium relevance)</span></button>
+      <button class="tab" role="tab" aria-selected="false" data-view-target="all"
+        onclick="setView('all')">All <span class="count">(every pillar)</span></button>
+    </div>
+
     <!-- 1. What is AI Readiness? -->
     <section class="panel">
       <h2>What is AI Readiness?</h2>
       <p>AI coding agents are only as effective as the context they receive. AgentRC measures how AI-ready a repo is across <strong>9 pillars</strong> in two categories — Repo Health and AI Setup — and maps the result to a <strong>5-level maturity model</strong>. This report is the <em>Measure</em> step in AgentRC's <em>Measure → Generate → Maintain</em> loop.</p>
+      <p style="color:var(--muted);font-size:13px;margin-top:8px"><strong>AI Only</strong> hides pillars whose AI relevance is "low" (Observability, Security) so you focus on the changes that most directly improve agent output. Switch to <strong>All</strong> to see every pillar including general engineering hygiene.</p>
     </section>
 
     <!-- 2. KPIs -->
@@ -248,7 +287,34 @@ Produce **one file** at `reports/index.html`. Use this skeleton (fill placeholde
     <section class="panel">
       <h2>Repo Health Breakdown</h2>
       <div class="grid cols-2">
-        <!-- One .pillar block per Repo Health pillar -->
+        <!--
+          One .pillar block per Repo Health pillar. Each block MUST set
+          data-ai-relevance="high|medium|low" on the wrapping element so the
+          AI Only / All tabs work. Suggested mapping:
+            Style          -> medium
+            Build          -> high
+            Testing        -> high
+            Docs           -> high
+            Dev Environment-> medium
+            Code Quality   -> medium
+            Observability  -> low
+            Security       -> low
+
+          Block template:
+          <div class="pillar" data-ai-relevance="high">
+            <h3>
+              <span class="dot good"></span>
+              Docs
+              <span class="rel high">AI relevance: High</span>
+              <span style="margin-left:auto;color:var(--muted);font-size:13px">{{score}}%</span>
+            </h3>
+            <div class="bar good"><span style="width:{{score}}%"></span></div>
+            <p class="what"><strong>What it measures:</strong> {{whatItChecks}}</p>
+            <p class="why"><strong>Why it matters for AI:</strong> {{fullAiExplanation}}</p>
+            <p class="rec"><strong>Current state:</strong> {{currentState}}</p>
+            <p class="rec"><strong>Recommendation:</strong> {{specificAction}}</p>
+          </div>
+        -->
       </div>
     </section>
 
@@ -256,7 +322,7 @@ Produce **one file** at `reports/index.html`. Use this skeleton (fill placeholde
     <section class="panel">
       <h2>AI Setup Breakdown</h2>
       <div class="grid cols-2">
-        <!-- AI Tooling pillar block -->
+        <!-- AI Tooling pillar block — always data-ai-relevance="high" -->
       </div>
     </section>
 
@@ -301,6 +367,16 @@ Produce **one file** at `reports/index.html`. Use this skeleton (fill placeholde
     <script type="application/json" id="raw-data">{{rawJsonCompact}}</script>
   </main>
 
+  <script>
+    function setView(v) {
+      var main = document.querySelector('main');
+      main.setAttribute('data-view', v);
+      document.querySelectorAll('.tab').forEach(function (t) {
+        t.setAttribute('aria-selected', t.getAttribute('data-view-target') === v ? 'true' : 'false');
+      });
+    }
+  </script>
+
   <footer>
     Generated by <a href="https://github.com/mvanderbend-msoft/acreadiness-cockpit">acreadiness-cockpit</a>
     · powered by <a href="https://github.com/microsoft/agentrc">microsoft/agentrc</a>.
@@ -315,10 +391,12 @@ Produce **one file** at `reports/index.html`. Use this skeleton (fill placeholde
 
 1. **Always run `agentrc readiness --json`** — never fabricate data.
 2. **Always write a single self-contained `reports/index.html`** — no external dependencies, opens with `file://`.
-3. **Explain every pillar** — *what it measures* + *why it matters for AI* + *the specific recommendation* (concrete file/config to add or edit).
-4. **Connect every Repo Health finding to AI impact** — repo health is not generic devops here; frame it through how it helps Copilot and other agents.
-5. **Honour policies** — if a policy is in scope, reflect its disable/override/threshold rules in the rendered report.
-6. **Show extras separately** — they never affect the score; never list them as gaps.
-7. **Frame next steps via AgentRC's loop** — Measure (this report) → Generate (`agentrc instructions`) → Maintain (CI `--fail-level`).
-8. **Only write `reports/index.html`** — do not modify any other files. Create the `reports/` directory if missing.
-9. **No fluff** — every paragraph in the report must add concrete information.
+3. **Explain every pillar** — *what it measures* + *why it matters for AI* (use the full per-pillar paragraph from the table above, not a one-liner) + *current state* + *the specific recommendation*.
+4. **Tag each pillar card with `data-ai-relevance="high|medium|low"`** matching the table above so the *AI Only / All* tabs filter correctly. AI Only hides `low`.
+5. **Render an "AI relevance" badge** (`<span class="rel high|medium|low">`) inside every pillar header so users can see the rating in either view.
+6. **Connect every Repo Health finding to AI impact** — repo health is not generic devops here; frame it through how it helps Copilot and other agents.
+7. **Honour policies** — if a policy is in scope, reflect its disable/override/threshold rules in the rendered report.
+8. **Show extras separately** — they never affect the score; never list them as gaps.
+9. **Frame next steps via AgentRC's loop** — Measure (this report) → Generate (`agentrc instructions`) → Maintain (CI `--fail-level`).
+10. **Only write `reports/index.html`** — do not modify any other files. Create the `reports/` directory if missing.
+11. **No fluff** — every paragraph in the report must add concrete information.
