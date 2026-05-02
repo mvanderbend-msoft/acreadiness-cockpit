@@ -16,10 +16,12 @@
       "skills": [
         "./skills/cockpit",
         "./skills/cockpit-refresh",
-        "./skills/cockpit-eval"
+        "./skills/cockpit-eval",
+        "./skills/cockpit-report"
       ],
       "agents": [
-        "./agents/readiness-coach.agent.md"
+        "./agents/readiness-coach.agent.md",
+        "./agents/ai-readiness-reporter.agent.md"
       ],
       "hooks": "./hooks/hooks.json",
       "mcpServers": "./.mcp.json"

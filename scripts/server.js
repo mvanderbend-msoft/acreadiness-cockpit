@@ -101,6 +101,16 @@ const ROUTES = {
     return { entries };
   },
   'GET /api/evals': async () => await readJsonSafe(path.join(DATA_DIR, 'evals.json'), null),
+  'GET /api/report': async () => {
+    const file = path.join(REPO_ROOT, 'reports', 'ai-readiness-report.md');
+    try {
+      const stat = await fs.stat(file);
+      const content = await fs.readFile(file, 'utf8');
+      return { exists: true, path: file, mtime: stat.mtime.toISOString(), content };
+    } catch {
+      return { exists: false, path: file };
+    }
+  },
 };
 
 async function handleApi(req, res) {

@@ -4,6 +4,7 @@ import { renderArtifacts } from './components/artifacts.js';
 import { renderHistory } from './components/history.js';
 import { renderEvals } from './components/evals.js';
 import { renderActions } from './components/actions.js';
+import { renderReport } from './components/report.js';
 
 const view = document.getElementById('view');
 const tabsEl = document.getElementById('tabs');
@@ -52,6 +53,7 @@ export const api = {
 };
 
 const ROUTES = {
+  '/report':    renderReport,
   '/readiness': renderReadiness,
   '/artifacts': renderArtifacts,
   '/history':   renderHistory,
@@ -66,9 +68,9 @@ function setActiveTab(route) {
 }
 
 async function render() {
-  const route = (location.hash.replace(/^#/, '') || '/readiness');
+  const route = (location.hash.replace(/^#/, '') || '/report');
   setActiveTab(route);
-  const fn = ROUTES[route] || renderReadiness;
+  const fn = ROUTES[route] || renderReport;
   view.innerHTML = '<div class="empty">Loading…</div>';
   try {
     await fn(view, { api, setStatus });
