@@ -98,14 +98,17 @@ The skill reads each area's `paths` from `agentrc.config.json` and uses that as 
 
 | | **Flat** *(default)* | **Nested** |
 |---|---|---|
-| Output | One `AGENTS.md` at the repo root | Hub `AGENTS.md` at the root + per-topic detail files in `.agents/` (e.g. `.agents/build.md`, `.agents/testing.md`) |
+| Hub file | `.github/copilot-instructions.md` | `.github/copilot-instructions.md` |
+| Detail files | — | `.github/instructions/<topic>.instructions.md` (each with `applyTo` glob) |
 | Best for | Small / medium repos, single stack, single team | Large or multi-stack repos, monorepos, multiple teams |
 | Review | One file, one PR | Multiple smaller files — each topic can be reviewed by its owners |
-| Token cost for the agent | Lowest — the whole file always loads | Lower per-task — agents pull only the topics they need |
+| Token cost for the agent | Lowest — the whole file always loads | Lower per-task — VS Code only loads topics whose `applyTo` matches the active file |
 | Optional | — | Add `--claude-md` to also emit `CLAUDE.md` |
-| Monorepos | Combine with `--areas` for area-scoped variants | Combine with `--areas` for hub + per-area detail trees |
+| Monorepos | Combine with `--areas` for per-area `applyTo` files | Combine with `--areas` — topic files + per-area files coexist in `.github/instructions/` |
 
-**Rule of thumb:** start with `flat`. Switch to `nested` once `AGENTS.md` grows beyond ~300 lines, you have more than 5 top-level directories, or different parts of the repo have meaningfully different conventions.
+**Why `.github/instructions/` and not `.agents/`?** When the main output is `.github/copilot-instructions.md`, this skill rewrites AgentRC's nested output into VS Code's native `.instructions.md` layout — that's the location Copilot auto-discovers. If you instead choose `--output AGENTS.md`, nested keeps AgentRC's default `.agents/` layout for agent-agnostic tooling.
+
+**Rule of thumb:** start with `flat`. Switch to `nested` once the file grows beyond ~300 lines, you have more than 5 top-level directories, or different parts of the repo have meaningfully different conventions.
 
 You can also pass options directly:
 
