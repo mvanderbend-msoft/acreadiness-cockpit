@@ -1,0 +1,13 @@
+{
+  "name": "acreadiness-cockpit",
+  "description": "Browser-based cockpit for AI-readiness, conversation history, artifacts, and evals — powered by Microsoft AgentRC.",
+  "version": "0.1.0",
+  "author": {
+    "name": "acreadiness",
+    "url": "https://github.com/microsoft/agentrc"
+  },
+  "skills": "skills/",
+  "agents": "agents/",
+  "hooks": "hooks/hooks.json",
+  "mcpServers": ".mcp.json"
+}

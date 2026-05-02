@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AgentRC Cockpit</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">◐</span>
+      <h1>AgentRC Cockpit</h1>
+    </div>
+    <nav class="tabs" id="tabs">
+      <a href="#/readiness" data-tab="readiness">Readiness</a>
+      <a href="#/artifacts" data-tab="artifacts">Artifacts</a>
+      <a href="#/history" data-tab="history">History</a>
+      <a href="#/evals" data-tab="evals">Evals</a>
+      <a href="#/actions" data-tab="actions">Actions</a>
+    </nav>
+    <div class="meta" id="meta"></div>
+  </header>
+  <main id="view"></main>
+  <footer class="footer">
+    <span id="status">idle</span>
+    <span class="spacer"></span>
+    <span>Powered by <a href="https://github.com/microsoft/agentrc" target="_blank" rel="noreferrer">microsoft/agentrc</a></span>
+  </footer>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/agentrc/main/.github/plugin/marketplace.schema.json",
+  "name": "acreadiness-cockpit-marketplace",
+  "description": "AI-readiness cockpit plugin for GitHub Copilot",
+  "plugins": [
+    {
+      "name": "acreadiness-cockpit",
+      "description": "Browser-based AgentRC cockpit with readiness, history, artifacts, and evals.",
+      "version": "0.1.0",
+      "source": {
+        "type": "github",
+        "repo": "mvanderbend-msoft/acreadiness-cockpit"
+      }
+    }
+  ]
+}
